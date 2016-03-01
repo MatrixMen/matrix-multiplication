@@ -6,9 +6,7 @@
 #include <sys/time.h>
 #include <assert.h>
 #include <omp.h>
-
-
-
+#include <x86intrin.h>
 
 /* the following two definitions of DEBUGGING control whether or not
    debugging information is written out. To put the program into
@@ -153,8 +151,20 @@ void matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a
 
 /* the fast version of matmul written by the team */
 void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
-  //replace this
-  matmul(A, B, C, a_rows, a_cols, b_cols);
+  #pragma omp parallel for
+  for (int i = 0; i < a_rows; i++) {
+    for (int k = 0; k < a_cols; k++) {
+      struct complex r = A[i][k];
+
+      for (int j = 0; j < b_cols; j++) {
+        struct complex x = B[k][j];
+        float real = r.real * x.real - r.imag * x.imag;
+        float imag = r.real * x.imag + r.imag * x.real;
+        C[i][j].real += real;
+        C[i][j].imag += imag;
+      }
+    }
+  }
 }
 
 long long time_diff(struct timeval * start, struct timeval * end) {
