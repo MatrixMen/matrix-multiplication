@@ -151,7 +151,7 @@ void matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a
 
 /* the fast version of matmul written by the team */
 void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
-  #pragma omp parallel for
+  #pragma omp parallel for if(a_cols > 170)
   for (int i = 0; i < a_rows; i++) {
     for (int k = 0; k < a_cols; k++) {
       struct complex r = A[i][k];
