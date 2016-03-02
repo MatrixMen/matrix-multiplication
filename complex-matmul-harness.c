@@ -156,23 +156,23 @@ void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, 
     for (int k = 0; k < a_cols; k++) {
       struct complex r = A[i][k];
 
-      __m128 a2 = _mm_setr_ps(r.real, r.imag, r.real, r.imag);
+      __m128 a_real = _mm_set1_ps(r.real);
+      __m128 a_imag = _mm_set1_ps(r.imag);
 
       for (int j = 0; j < b_cols; j += 2) {
-        __m128 b2 = _mm_load_ps((float*) &B[k][j]);
+        __m128 b_complex = _mm_load_ps((float*) &B[k][j]);
 
-        __m128 c2 = _mm_mul_ps(a2, b2);
-        __m128 real2 = _mm_hsub_ps(c2, c2);
-        __m128 d2 = _mm_shuffle_ps(b2, b2, _MM_SHUFFLE(2, 3, 0, 1));
-        __m128 e2 = _mm_mul_ps(d2, a2);
-        __m128 imag2 = _mm_hadd_ps(e2, e2);
+        __m128 real_times_b = _mm_mul_ps(a_real, b_complex);
+        __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
 
-        __m128 temp = _mm_shuffle_ps(real2, imag2, _MM_SHUFFLE(2, 3, 2, 3));
-        temp = _mm_shuffle_ps(temp, temp, _MM_SHUFFLE(2, 0, 3, 1));
+        imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 add = _mm_add_ps(real_times_b, imag_times_b);
+        __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
 
-        __m128 see2 = _mm_load_ps((float*) &C[i][j]);
-        temp = _mm_add_ps(see2, temp);
-        _mm_store_ps((float*) &C[i][j], temp);
+        __m128 blender = _mm_blend_ps(sub, add, 10);
+
+        __m128 current_c = _mm_load_ps((float*) &C[i][j]);
+        _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
       }
     }
   }
