@@ -156,12 +156,28 @@ void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, 
     for (int k = 0; k < a_cols; k++) {
       struct complex r = A[i][k];
 
-      for (int j = 0; j < b_cols; j++) {
-        struct complex x = B[k][j];
-        float real = r.real * x.real - r.imag * x.imag;
-        float imag = r.real * x.imag + r.imag * x.real;
-        C[i][j].real += real;
-        C[i][j].imag += imag;
+      __m128 a2 = _mm_setr_ps(r.real, r.imag, r.real, r.imag);
+
+      for (int j = 0; j < b_cols; j += 2) {
+        __m128 b2 = _mm_load_ps((float*) &B[k][j]);
+
+        __m128 c2 = _mm_mul_ps(a2, b2);
+        __m128 real2 = _mm_hsub_ps(c2, c2);
+        __m128 d2 = _mm_shuffle_ps(b2, b2, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 e2 = _mm_mul_ps(d2, a2);
+        __m128 imag2 = _mm_hadd_ps(e2, e2);
+
+        __m128 temp = _mm_shuffle_ps(real2, imag2, _MM_SHUFFLE(2, 3, 2, 3));
+        temp = _mm_shuffle_ps(temp, temp, _MM_SHUFFLE(2, 0, 3, 1));
+
+        __m128 see2 = _mm_load_ps((float*) &C[i][j]);
+        temp = _mm_add_ps(see2, temp);
+        _mm_store_ps((float*) &C[i][j], temp);
+
+        /* C[i][j].real += _mm_cvtss_f32(_mm_shuffle_ps(real2, real2, _MM_SHUFFLE(0, 0, 0, 0))); */
+        /* C[i][j + 1].real += _mm_cvtss_f32(_mm_shuffle_ps(real2, real2, _MM_SHUFFLE(0, 0, 0, 1))); */
+        /* C[i][j].imag += _mm_cvtss_f32(_mm_shuffle_ps(imag2, imag2, _MM_SHUFFLE(0, 0, 0, 0))); */
+        /* C[i][j + 1].imag += _mm_cvtss_f32(_mm_shuffle_ps(imag2, imag2, _MM_SHUFFLE(0, 0, 0, 1))); */
       }
     }
   }
@@ -209,7 +225,7 @@ int main(int argc, char ** argv)
     printf("matrix A:\n");
     write_out(A, a_dim1, a_dim2);
     printf("\nmatrix B:\n");
-    write_out(A, a_dim1, a_dim2);
+    write_out(B, b_dim1, b_dim2);
     printf("\n");
   } )
 
@@ -242,6 +258,15 @@ int main(int argc, char ** argv)
   /* now check that the team's matmul routine gives the same answer
      as the known working version */
   check_result(C, control_matrix, a_dim1, b_dim2);
+
+  DEBUGGING( {
+      printf("matrix C:\n");
+      write_out(C, a_dim1, b_dim2);
+      printf("\nmatrix control:\n");
+      write_out(control_matrix, a_dim1, b_dim2);
+      printf("\n");
+    } )
+
 
   /* free all matrices */
   free_matrix(A);
