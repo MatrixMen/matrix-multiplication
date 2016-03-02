@@ -173,11 +173,6 @@ void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, 
         __m128 see2 = _mm_load_ps((float*) &C[i][j]);
         temp = _mm_add_ps(see2, temp);
         _mm_store_ps((float*) &C[i][j], temp);
-
-        /* C[i][j].real += _mm_cvtss_f32(_mm_shuffle_ps(real2, real2, _MM_SHUFFLE(0, 0, 0, 0))); */
-        /* C[i][j + 1].real += _mm_cvtss_f32(_mm_shuffle_ps(real2, real2, _MM_SHUFFLE(0, 0, 0, 1))); */
-        /* C[i][j].imag += _mm_cvtss_f32(_mm_shuffle_ps(imag2, imag2, _MM_SHUFFLE(0, 0, 0, 0))); */
-        /* C[i][j + 1].imag += _mm_cvtss_f32(_mm_shuffle_ps(imag2, imag2, _MM_SHUFFLE(0, 0, 0, 1))); */
       }
     }
   }
