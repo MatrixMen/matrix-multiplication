@@ -156,12 +156,23 @@ void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, 
     for (int k = 0; k < a_cols; k++) {
       struct complex r = A[i][k];
 
-      for (int j = 0; j < b_cols; j++) {
-        struct complex x = B[k][j];
-        float real = r.real * x.real - r.imag * x.imag;
-        float imag = r.real * x.imag + r.imag * x.real;
-        C[i][j].real += real;
-        C[i][j].imag += imag;
+      __m128 a_real = _mm_set1_ps(r.real);
+      __m128 a_imag = _mm_set1_ps(r.imag);
+
+      for (int j = 0; j < b_cols; j += 2) {
+        __m128 b_complex = _mm_load_ps((float*) &B[k][j]);
+
+        __m128 real_times_b = _mm_mul_ps(a_real, b_complex);
+        __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
+
+        imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
+        __m128 add = _mm_add_ps(real_times_b, imag_times_b);
+        __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
+
+        __m128 blender = _mm_blend_ps(sub, add, 10);
+
+        __m128 current_c = _mm_load_ps((float*) &C[i][j]);
+        _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
       }
     }
   }
@@ -209,7 +220,7 @@ int main(int argc, char ** argv)
     printf("matrix A:\n");
     write_out(A, a_dim1, a_dim2);
     printf("\nmatrix B:\n");
-    write_out(A, a_dim1, a_dim2);
+    write_out(B, b_dim1, b_dim2);
     printf("\n");
   } )
 
@@ -242,6 +253,15 @@ int main(int argc, char ** argv)
   /* now check that the team's matmul routine gives the same answer
      as the known working version */
   check_result(C, control_matrix, a_dim1, b_dim2);
+
+  DEBUGGING( {
+      printf("matrix C:\n");
+      write_out(C, a_dim1, b_dim2);
+      printf("\nmatrix control:\n");
+      write_out(control_matrix, a_dim1, b_dim2);
+      printf("\n");
+    } )
+
 
   /* free all matrices */
   free_matrix(A);
