@@ -1,15 +1,22 @@
 CC = gcc
 override CFLAGS += -fopenmp -O3 -march=native -std=gnu99
 BIN = matmul
+PROF_BIN = profbin
 
-SRC = complex-matmul-harness.c
+SRC = team_matmul.c complex-matmul-harness.c
 PROFILE_FILES = $(wildcard *.gcda)
 
-all: $(SRC)
-	@$(CC) $(CFLAGS) -fprofile-generate -o $(BIN) $^
-	@-./matmul 100 100 100 100 > /dev/null 2>&1
-	$(CC) $(CFLAGS) -fprofile-use -fprofile-correction -o $(BIN) $^
+.PHONY : all profile
+
+all: $(SRC) profile
+	$(CC) $(CFLAGS) -fprofile-use -fprofile-correction -o $(BIN) $(SRC)
 
 clean:
 	$(RM) $(BIN)
 	$(RM) $(PROFILE_FILES)
+	$(RM) $(PROF_BIN)
+
+profile: profile.c team_matmul.c
+	@$(CC) $(CFLAGS) -fprofile-generate -o $(PROF_BIN) $^
+	@-./$(PROF_BIN) > /dev/null 2>&1
+
