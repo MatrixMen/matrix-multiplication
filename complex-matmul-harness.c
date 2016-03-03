@@ -208,19 +208,27 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
       __m128 a_imag = _mm_set1_ps(r.imag);
 
       for (int j = 0; j < b_cols; j += 2) {
-        __m128 b_complex = _mm_loadu_ps((float*) &B[k][j]);
+        if ( j == b_cols - 1 ) {
+          struct complex x = B[k][j];
+          float real = r.real * x.real - r.imag * x.imag;
+          float imag = r.real * x.imag + r.imag * x.real;
+          C[i][j].real += real;
+          C[i][j].imag += imag;
+        } else {
+          __m128 b_complex = _mm_loadu_ps((float*) &B[k][j]);
 
-        __m128 real_times_b = _mm_mul_ps(a_real, b_complex);
-        __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
-        imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
+          __m128 real_times_b = _mm_mul_ps(a_real, b_complex);
+          __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
+          imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-        __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-        __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
+          __m128 add = _mm_add_ps(real_times_b, imag_times_b);
+          __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
 
-        __m128 blender = _mm_blend_ps(sub, add, 10);
+          __m128 blender = _mm_blend_ps(sub, add, 10);
 
-        __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
-        _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+          __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
+          _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+        }
       }
     }
   }
