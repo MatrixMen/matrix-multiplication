@@ -151,9 +151,21 @@ void matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a
 
 
 void serial_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
-  // will change this to one with the reorganised loop - cache betterness
   printf("Using serial one.\n");
-  matmul(A, B, C, a_rows, a_cols, b_cols);
+  #pragma omp parallel for
+  for (int i = 0; i < a_rows; i++) {
+    for (int k = 0; k < a_cols; k++) {
+      struct complex r = A[i][k];
+
+      for (int j = 0; j < b_cols; j++) {
+        struct complex x = B[k][j];
+        float real = r.real * x.real - r.imag * x.imag;
+        float imag = r.real * x.imag + r.imag * x.real;
+        C[i][j].real += real;
+        C[i][j].imag += imag;
+      }
+    }
+  }
 }
 
 void parallel_vectorised_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
@@ -178,7 +190,7 @@ void parallel_vectorised_matmul(struct complex ** A, struct complex ** B, struct
 
         __m128 blender = _mm_blend_ps(sub, add, 10);
 
-        __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
+        __m128 current_c = _mm_load_ps((float*) &C[i][j]);
         _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
       }
     }
@@ -207,7 +219,7 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
 
         __m128 blender = _mm_blend_ps(sub, add, 10);
 
-        __m128 current_c = _mm_load_ps((float*) &C[i][j]);
+        __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
         _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
       }
     }
@@ -220,14 +232,13 @@ int odd(int num) {
 
 /* the fast version of matmul written by the team */
 void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
-  if ( a_cols < 170 ) {
+  if (a_cols < 170) {
     serial_matmul(A, B, C, a_rows, a_cols, b_cols);
   } else if (odd(a_rows) || odd(a_cols) || odd(b_cols)) {
     odd_dimension_matmul(A, B, C, a_rows, a_cols, b_cols);
   } else {
     parallel_vectorised_matmul(A, B, C, a_rows, a_cols, b_cols);
   }
-  // ...
 }
 
 long long time_diff(struct timeval * start, struct timeval * end) {
