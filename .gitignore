@@ -1,4 +1,5 @@
 *.gcda
 *.s
+*.out
 matmul
 profbin
