@@ -6,9 +6,9 @@ PROF_BIN = profbin
 SRC = team_matmul.c complex-matmul-harness.c
 PROFILE_FILES = $(wildcard *.gcda)
 
-.PHONY : all profile
+.PHONY : all profile clean
 
-all: $(SRC) profile
+all: clean $(SRC) profile
 	$(CC) $(CFLAGS) -fprofile-use -fprofile-correction -o $(BIN) $(SRC)
 
 clean:
