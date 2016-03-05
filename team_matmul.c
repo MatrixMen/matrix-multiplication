@@ -32,13 +32,10 @@ void parallel_vectorised_matmul(struct complex ** A, struct complex ** B, struct
         __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
         imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-        __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-        __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
-
-        __m128 blender = _mm_blend_ps(sub, add, 10);
+        __m128 addsub = _mm_addsub_ps(real_times_b, imag_times_b);
 
         __m128 current_c = _mm_load_ps((float*) &C[i][j]);
-        _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+        _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, addsub));
       }
     }
   }
@@ -71,13 +68,10 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
               __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
               imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-              __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-              __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
-
-              __m128 blender = _mm_blend_ps(sub, add, 10);
+              __m128 addsub = _mm_addsub_ps(real_times_b, imag_times_b);
 
               __m128 current_c = _mm_load_ps((float*) &C[i][j]);
-              _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+              _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, addsub));
             }
           }
         } else {
@@ -95,13 +89,10 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
               __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
               imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-              __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-              __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
-
-              __m128 blender = _mm_blend_ps(sub, add, 10);
+              __m128 addsub = _mm_addsub_ps(real_times_b, imag_times_b);
 
               __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
-              _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+              _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, addsub));
             }
           }
         }
@@ -128,13 +119,10 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
               __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
               imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-              __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-              __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
-
-              __m128 blender = _mm_blend_ps(sub, add, 10);
+              __m128 addsub = _mm_addsub_ps(real_times_b, imag_times_b);
 
               __m128 current_c = _mm_loadu_ps((float*) &C[i][j]);
-              _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+              _mm_storeu_ps((float*) &C[i][j], _mm_add_ps(current_c, addsub));
             }
           }
         } else {
@@ -153,13 +141,10 @@ void odd_dimension_matmul(struct complex ** A, struct complex ** B, struct compl
               __m128 imag_times_b = _mm_mul_ps(a_imag, b_complex);
               imag_times_b = _mm_shuffle_ps(imag_times_b, imag_times_b, _MM_SHUFFLE(2, 3, 0, 1));
 
-              __m128 add = _mm_add_ps(real_times_b, imag_times_b);
-              __m128 sub = _mm_sub_ps(real_times_b, imag_times_b);
-
-              __m128 blender = _mm_blend_ps(sub, add, 10);
+              __m128 addsub = _mm_addsub_ps(real_times_b, imag_times_b);
 
               __m128 current_c = _mm_load_ps((float*) &C[i][j]);
-              _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, blender));
+              _mm_store_ps((float*) &C[i][j], _mm_add_ps(current_c, addsub));
             }
           }
         }
