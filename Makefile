@@ -19,4 +19,3 @@ clean:
 profile: profile.c team_matmul.c
 	@$(CC) $(CFLAGS) -fprofile-generate -o $(PROF_BIN) $^
 	@-./$(PROF_BIN) > /dev/null 2>&1
-
