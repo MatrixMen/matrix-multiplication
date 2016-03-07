@@ -150,7 +150,7 @@ int odd(int num) {
 /* the fast version of matmul written by the team */
 void team_matmul(struct complex ** A, struct complex ** B, struct complex ** C, int a_rows, int a_cols, int b_cols) {
   // Compiler Granny told us about 171
-  if (a_rows < 171) {
+  if (a_cols < 171) {
     serial_matmul(A, B, C, a_rows, a_cols, b_cols);
   } else if (odd(b_cols)) {
     odd_dimension_matmul(A, B, C, a_rows, a_cols, b_cols);
